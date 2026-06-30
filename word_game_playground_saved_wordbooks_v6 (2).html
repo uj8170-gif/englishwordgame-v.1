@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>단어 게임 놀이터</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+      background: linear-gradient(135deg, #fff7d6, #dff4ff);
+      color: #222;
+    }
+    header { text-align: center; padding: 28px 16px 12px; }
+    h1 { margin: 0; font-size: 34px; }
+    .subtitle { margin-top: 8px; color: #555; }
+    .container { max-width: 1050px; margin: 0 auto; padding: 16px; }
+    .panel {
+      background: rgba(255,255,255,0.92);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      margin-bottom: 18px;
+    }
+    textarea, input.wordbook-name {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 2px solid #ddd;
+      font-size: 16px;
+    }
+    textarea { min-height: 130px; resize: vertical; }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 18px;
+      margin: 5px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #4f8cff;
+      color: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+    button:hover { transform: translateY(-1px); }
+    .secondary { background: #777; }
+    .green { background: #28a745; }
+    .orange { background: #ff9800; }
+    .pink { background: #ff5ba7; }
+    .purple { background: #845ef7; }
+    .red { background: #ff5252; }
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+    .game-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+      border: 3px solid transparent;
+      cursor: pointer;
+      min-height: 120px;
+    }
+    .game-card:hover { border-color: #4f8cff; transform: translateY(-2px); }
+    .hidden { display: none; }
+    .center { text-align: center; }
+    .status {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    .badge {
+      background: white;
+      border-radius: 999px;
+      padding: 8px 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .question {
+      font-size: 30px;
+      font-weight: 900;
+      text-align: center;
+      margin: 20px 0;
+    }
+    input[type="text"] {
+      width: 100%;
+      max-width: 420px;
+      padding: 14px;
+      border: 2px solid #ccc;
+      border-radius: 14px;
+      font-size: 20px;
+      display: block;
+      margin: 0 auto 12px;
+      text-align: center;
+    }
+    .wordbook-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .wordbook-card {
+      background: #fff;
+      border: 2px solid #d9e5ff;
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 90px;
+    }
+    .wordbook-card label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 17px;
+    }
+    .wordbook-card small { color: #666; display: block; margin-top: 6px; }
+    .wordbook-actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .wordbook-actions button {
+      padding: 7px 10px;
+      font-size: 13px;
+      margin: 0;
+      box-shadow: none;
+    }
+    .notice {
+      background: #fff9db;
+      border: 2px dashed #ffd43b;
+      border-radius: 14px;
+      padding: 12px;
+      color: #555;
+      margin: 10px 0;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+    }
+    .memory-card, .box-card {
+      background: #4f8cff;
+      color: white;
+      min-height: 85px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+    }
+    .memory-card.open, .memory-card.matched {
+      background: white;
+      color: #222;
+      border: 3px solid #4f8cff;
+    }
+    .memory-card.matched { background: #d7ffd9; border-color: #28a745; }
+    .letters button {
+      background: #fff;
+      color: #222;
+      border: 2px solid #4f8cff;
+      min-width: 44px;
+    }
+    .letters button.used-letter {
+      background: #cfd4dc;
+      color: #777;
+      border-color: #adb5bd;
+      opacity: 0.75;
+    }
+    .spelling-controls { margin-top: 12px; }
+    .treasure-letter {
+      background: #b7791f !important;
+      color: white !important;
+      border: 3px solid #8a5a16 !important;
+      font-size: 22px !important;
+      min-height: 95px !important;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .treasure-letter.used {
+      background: #d7ffd9 !important;
+      color: #222 !important;
+      border-color: #28a745 !important;
+      opacity: 0.7;
+    }
+    .blank-word {
+      font-size: 36px;
+      letter-spacing: 6px;
+      font-weight: 900;
+      text-align: center;
+      margin: 18px 0;
+    }
+    .answer-slots {
+      font-size: 32px;
+      letter-spacing: 8px;
+      text-align: center;
+      margin: 18px 0;
+      font-weight: 900;
+    }
+    .play-area {
+      position: relative;
+      height: 390px;
+      overflow: hidden;
+      background: #eaf7ff;
+      border-radius: 20px;
+      border: 3px dashed #8ecae6;
+    }
+    .falling-word {
+      position: absolute;
+      padding: 10px 16px;
+      background: white;
+      border: 2px solid #4f8cff;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .falling-word.clicked-correct {
+      background: #28a745 !important;
+      color: white !important;
+      border-color: #1f7a34 !important;
+      transform: scale(1.08);
+    }
+    .falling-word.clicked-wrong {
+      background: #ff5252 !important;
+      color: white !important;
+      border-color: #c92a2a !important;
+      transform: scale(1.08);
+    }
+    .bubble {
+      position: absolute;
+      width: 105px;
+      height: 105px;
+      border-radius: 50%;
+      background: rgba(79,140,255,0.82);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: 900;
+      cursor: pointer;
+      animation: float 3s infinite alternate ease-in-out;
+    }
+    @keyframes float { from { transform: translateY(0); } to { transform: translateY(-25px); } }
+    .box-card { background: #b7791f; min-height: 110px; font-size: 36px; }
+    .box-card.opened {
+      background: white;
+      color: #222;
+      border: 3px solid #b7791f;
+      font-size: 18px;
+    }
+    .result {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 900;
+      margin-top: 12px;
+      min-height: 30px;
+    }
+  </style>
+</head>
+<body onload="loadWordbooks()">
+  <header>
+    <h1>🎮 단어 게임 놀이터</h1>
+    <div class="subtitle">영어 단어와 한글 뜻을 단어장으로 저장하고, 원하는 단어장을 골라 게임해요.</div>
+  </header>
+
+  <div class="container">
+    <section id="setup" class="panel">
+      <h2>1. 새 단어장 만들기</h2>
+      <p>단어장 이름을 쓰고, 한 줄에 <b>영어,한글뜻</b> 형태로 입력하세요.</p>
+      <input class="wordbook-name" id="wordbookName" placeholder="예: 단어장 1, 4단원 길 안내, 기초 단어" />
+      <br><br>
+      <textarea id="wordInput">apple,사과
+school,학교
+museum,박물관
+library,도서관
+happy,행복한
+angry,화난
+go straight,곧장 가다
+turn left,왼쪽으로 돌다</textarea>
+      <div class="center">
+        <button onclick="saveWordbook()">이 단어장 저장하기</button>
+        <button class="secondary" onclick="fillExample()">예시 단어 다시 넣기</button>
+      </div>
+      <div class="notice">
+        ※ 저장한 단어장은 이 컴퓨터/브라우저에 남아 있어요. 같은 파일을 다시 열어도 단어장이 유지됩니다.
+      </div>
+    </section>
+
+    <section id="wordbookPanel" class="panel">
+      <h2>2. 게임에 사용할 단어장 선택하기</h2>
+      <p>단어장 1, 2, 3 중 일부 또는 전체를 체크하면, 체크한 단어장에서 문제가 나옵니다.</p>
+      <div class="center">
+        <button class="green" onclick="selectAllWordbooks()">전체 선택</button>
+        <button class="secondary" onclick="clearAllWordbooks()">전체 해제</button>
+        <button class="red" onclick="deleteCheckedWordbooks()">선택한 단어장 삭제</button>
+      </div>
+      <div id="wordbookList" class="wordbook-list"></div>
+      <div class="center">
+        <button class="orange" onclick="prepareGameMenu()">선택한 단어장으로 게임하기</button>
+      </div>
+    </section>
+
+    <section id="menu" class="panel hidden">
+      <h2>3. 게임 선택하기</h2>
+      <div class="notice" id="selectedInfo"></div>
+      <div class="game-grid">
+        <div class="game-card" onclick="startSpeedQuiz()">⚡<h3>스피드 퀴즈</h3><p>뜻을 보고 영어를 타이핑</p></div>
+        <div class="game-card" onclick="startMemory()">🃏<h3>메모리 카드</h3><p>영어와 뜻 짝 맞추기</p></div>
+        <div class="game-card" onclick="startSpellingBee()">🐝<h3>스펠링 비</h3><p>알파벳을 눌러 단어 완성</p></div>
+        <div class="game-card" onclick="startWordRain()">🌧️<h3>단어 비</h3><p>떨어지는 정답 단어 클릭</p></div>
+        <div class="game-card" onclick="startBubblePop()">🫧<h3>버블팝</h3><p>떠다니는 정답 버블 터뜨리기</p></div>
+        <div class="game-card" onclick="startTreasure()">💎<h3>보물 철자 찾기</h3><p>빈칸에 들어갈 철자 찾기</p></div>
+      </div>
+    </section>
+
+    <section id="game" class="panel hidden">
+      <div class="status">
+        <span class="badge" id="gameTitle">게임</span>
+        <span class="badge">점수: <span id="score">0</span></span>
+        <span class="badge">문제: <span id="count">0</span></span>
+        <span class="badge">사용 단어: <span id="activeCount">0</span>개</span>
+      </div>
+      <div id="gameContent"></div>
+      <div class="center">
+        <button class="secondary" onclick="backToMenu()">게임 선택으로</button>
+        <button class="secondary" onclick="backToWordbooks()">단어장 선택으로</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let wordbooks = [];
+    let words = [];
+    let score = 0;
+    let count = 0;
+    let current = null;
+    let timer = null;
+    let lastSavedBookId = null;
+    let questionQueue = [];
+    let lastQuestionKey = null;
+
+    function parseWords(raw) {
+      return raw.split("\n")
+        .map(line => line.split(","))
+        .filter(pair => pair.length >= 2 && pair[0].trim() && pair[1].trim())
+        .map(pair => ({ en: pair[0].trim(), ko: pair.slice(1).join(",").trim() }));
+    }
+
+    function saveToStorage() {
+      localStorage.setItem("wordGameWordbooks", JSON.stringify(wordbooks));
+    }
+
+    function loadWordbooks() {
+      const saved = localStorage.getItem("wordGameWordbooks");
+      wordbooks = saved ? JSON.parse(saved) : [];
+      renderWordbooks();
+    }
+
+    function getNextWordbookName() {
+      let n = wordbooks.length + 1;
+      let name = "단어장 " + n;
+      while (wordbooks.some(book => book.name === name)) {
+        n++;
+        name = "단어장 " + n;
+      }
+      return name;
+    }
+
+    function saveWordbook() {
+      const raw = document.getElementById("wordInput").value.trim();
+      const parsed = parseWords(raw);
+      if (parsed.length < 1) {
+        alert("저장할 단어를 1개 이상 입력해주세요.");
+        return;
+      }
+
+      let name = document.getElementById("wordbookName").value.trim();
+      if (!name) name = getNextWordbookName();
+
+      const newBookId = Date.now();
+      lastSavedBookId = newBookId;
+
+      wordbooks.push({
+        id: newBookId,
+        name: name,
+        words: parsed,
+        createdAt: new Date().toLocaleString()
+      });
+
+      saveToStorage();
+      renderWordbooks();
+
+      document.getElementById("wordbookName").value = "";
+      document.getElementById("wordInput").value = "";
+      alert(name + " 저장 완료! (" + parsed.length + "개)");
+    }
+
+    function renderWordbooks() {
+      const list = document.getElementById("wordbookList");
+      if (!list) return;
+
+      if (wordbooks.length === 0) {
+        list.innerHTML = `<div class="notice">아직 저장된 단어장이 없어요. 위에서 단어장을 먼저 저장해 주세요.</div>`;
+        return;
+      }
+
+      list.innerHTML = "";
+      wordbooks.forEach((book, index) => {
+        const preview = book.words.slice(0, 3).map(w => w.en + "-" + w.ko).join(", ");
+        const card = document.createElement("div");
+        card.className = "wordbook-card";
+        const checkedText = book.id === lastSavedBookId ? "checked" : "";
+        card.innerHTML = `
+          <label>
+            <input type="checkbox" class="wordbook-check" value="${book.id}" ${checkedText}>
+            ${book.name}
+          </label>
+          <small>${book.words.length}개 단어 · ${preview}${book.words.length > 3 ? " ..." : ""}</small>
+          <div class="wordbook-actions">
+            <button class="purple" onclick="loadBookToEditor(${book.id})">불러와서 수정</button>
+            <button class="red" onclick="deleteOneWordbook(${book.id})">삭제</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function loadBookToEditor(id) {
+      const book = wordbooks.find(b => b.id === id);
+      if (!book) return;
+      document.getElementById("wordbookName").value = book.name + " 수정본";
+      document.getElementById("wordInput").value = book.words.map(w => w.en + "," + w.ko).join("\n");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteOneWordbook(id) {
+      if (!confirm("이 단어장을 삭제할까요?")) return;
+      wordbooks = wordbooks.filter(b => b.id !== id);
+      saveToStorage();
+      renderWordbooks();
+    }
+
+    function deleteCheckedWordbooks() {
+      const checkedIds = Array.from(document.querySelectorAll(".wordbook-check:checked")).map(cb => Number(cb.value));
+      if (checkedIds.length === 0) {
+        alert("삭제할 단어장을 체크해주세요.");
+        return;
+      }
+      if (!confirm("선택한 단어장을 삭제할까요?")) return;
+      wordbooks = wordbooks.filter(b => !checkedIds.includes(b.id));
+      saveToStorage();
+      renderWordbooks();
+    }
+
+    function selectAllWordbooks() {
+      document.querySelectorAll(".wordbook-check").forEach(cb => cb.checked = true);
+    }
+
+    function clearAllWordbooks() {
+      document.querySelectorAll(".wordbook-check").forEach(cb => cb.checked = false);
+    }
+
+    function prepareGameMenu() {
+      const checkedIds = Array.from(document.querySelectorAll(".wordbook-check:checked")).map(cb => String(cb.value));
+      if (checkedIds.length === 0) {
+        alert("게임에 사용할 단어장을 1개 이상 체크해주세요.");
+        return;
+      }
+
+      const selectedBooks = wordbooks.filter(b => checkedIds.includes(String(b.id)));
+      words = [];
+      selectedBooks.forEach(book => {
+        book.words.forEach(word => words.push(word));
+      });
+
+      const uniqueMap = new Map();
+      words.forEach(w => uniqueMap.set(w.en.toLowerCase() + "|" + w.ko, w));
+      words = Array.from(uniqueMap.values());
+
+      if (words.length < 4) {
+        alert("게임을 하려면 선택한 단어장에 단어가 총 4개 이상 있어야 해요.");
+        return;
+      }
+
+      questionQueue = [];
+      lastQuestionKey = null;
+
+      document.getElementById("setup").classList.add("hidden");
+      document.getElementById("wordbookPanel").classList.add("hidden");
+      document.getElementById("game").classList.add("hidden");
+      document.getElementById("menu").classList.remove("hidden");
+
+      document.getElementById("selectedInfo").textContent =
+        "선택한 단어장: " + selectedBooks.map(b => b.name).join(", ") + " / 사용 단어: " + words.length + "개";
+
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 50);
+    }
+
+    function fillExample() {
+      document.getElementById("wordInput").value = `apple,사과
+school,학교
+museum,박물관
+library,도서관
+happy,행복한
+angry,화난
+go straight,곧장 가다
+turn left,왼쪽으로 돌다`;
+    }
+
+    function showGame(title, keepScore = false) {
+      clearInterval(timer);
+      if (!keepScore) {
+        score = 0;
+        count = 0;
+        questionQueue = [];
+        lastQuestionKey = null;
+      }
+      updateStatus(title);
+      document.getElementById("setup").classList.add("hidden");
+      document.getElementById("wordbookPanel").classList.add("hidden");
+      document.getElementById("menu").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+    }
+
+    function updateStatus(title) {
+      if (title) document.getElementById("gameTitle").textContent = title;
+      document.getElementById("score").textContent = score;
+      document.getElementById("count").textContent = count;
+      document.getElementById("activeCount").textContent = words.length;
+    }
+
+    function backToMenu() {
+      clearInterval(timer);
+      document.getElementById("game").classList.add("hidden");
+      document.getElementById("menu").classList.remove("hidden");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+    }
+
+    function backToWordbooks() {
+      clearInterval(timer);
+      document.getElementById("game").classList.add("hidden");
+      document.getElementById("menu").classList.add("hidden");
+      document.getElementById("setup").classList.remove("hidden");
+      document.getElementById("wordbookPanel").classList.remove("hidden");
+      renderWordbooks();
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+    }
+
+    function wordKey(word) {
+      return word.en.toLowerCase() + "|" + word.ko;
+    }
+
+    function resetQuestionQueue() {
+      questionQueue = shuffle([...words]);
+      if (lastQuestionKey && questionQueue.length > 1 && wordKey(questionQueue[0]) === lastQuestionKey) {
+        const first = questionQueue.shift();
+        questionQueue.push(first);
+      }
+    }
+
+    function randomWord() {
+      if (questionQueue.length === 0) {
+        resetQuestionQueue();
+      }
+      const next = questionQueue.shift();
+      lastQuestionKey = wordKey(next);
+      return next;
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function checkEnough() {
+      if (words.length < 4) {
+        alert("선택한 단어장에 단어가 4개 이상 있어야 해요.");
+        return false;
+      }
+      return true;
+    }
+
+    // 1. 스피드 퀴즈
+    function startSpeedQuiz() {
+      if (!checkEnough()) return;
+      showGame("⚡ 스피드 퀴즈");
+      nextSpeedQuestion();
+    }
+
+    function nextSpeedQuestion() {
+      current = randomWord();
+      count++;
+      updateStatus();
+      document.getElementById("gameContent").innerHTML = `
+        <div class="question">${current.ko}</div>
+        <input id="speedAnswer" type="text" placeholder="영어 단어 입력" onkeydown="if(event.key==='Enter') checkSpeedAnswer()">
+        <div class="center"><button class="green" onclick="checkSpeedAnswer()">정답 확인</button></div>
+        <div class="result" id="result"></div>
+      `;
+      document.getElementById("speedAnswer").focus();
+    }
+
+    function checkSpeedAnswer() {
+      const answer = document.getElementById("speedAnswer").value.trim().toLowerCase();
+      if (answer === current.en.toLowerCase()) {
+        score += 10;
+        document.getElementById("result").textContent = "정답! 🎉";
+        setTimeout(nextSpeedQuestion, 600);
+      } else {
+        document.getElementById("result").textContent = "다시 생각해 봐요!";
+      }
+      updateStatus();
+    }
+
+    // 2. 메모리 카드
+    function startMemory() {
+      if (!checkEnough()) return;
+      showGame("🃏 메모리 카드");
+      const selected = shuffle([...words]).slice(0, 6);
+      let cards = [];
+      selected.forEach((w, i) => {
+        cards.push({ text: w.en, pair: i });
+        cards.push({ text: w.ko, pair: i });
+      });
+      cards = shuffle(cards);
+
+      let opened = [];
+      document.getElementById("gameContent").innerHTML = `<div class="cards" id="memoryCards"></div><div class="result" id="result"></div>`;
+      const area = document.getElementById("memoryCards");
+
+      cards.forEach((card) => {
+        const div = document.createElement("div");
+        div.className = "memory-card";
+        div.textContent = "?";
+        div.onclick = () => {
+          if (div.classList.contains("open") || div.classList.contains("matched") || opened.length === 2) return;
+          div.classList.add("open");
+          div.textContent = card.text;
+          opened.push({ div, card });
+
+          if (opened.length === 2) {
+            count++;
+            if (opened[0].card.pair === opened[1].card.pair) {
+              score += 10;
+              opened[0].div.classList.add("matched");
+              opened[1].div.classList.add("matched");
+              opened = [];
+              document.getElementById("result").textContent = "짝을 찾았어요! 🎉";
+            } else {
+              setTimeout(() => {
+                opened.forEach(o => {
+                  o.div.classList.remove("open");
+                  o.div.textContent = "?";
+                });
+                opened = [];
+              }, 700);
+            }
+            updateStatus();
+          }
+        };
+        area.appendChild(div);
+      });
+    }
+
+    // 3. 스펠링 비
+    function startSpellingBee() {
+      if (!checkEnough()) return;
+      showGame("🐝 스펠링 비");
+      nextSpellingQuestion();
+    }
+
+    function nextSpellingQuestion() {
+      current = randomWord();
+      count++;
+      let typed = "";
+      let selectedButtons = [];
+      const clean = current.en.toLowerCase().replace(/ /g, "");
+      const letters = shuffle(clean.split(""));
+
+      function renderSlots() {
+        document.getElementById("slots").textContent = typed + "_ ".repeat(clean.length - typed.length);
+      }
+
+      document.getElementById("gameContent").innerHTML = `
+        <div class="question">${current.ko}</div>
+        <div class="answer-slots" id="slots">${"_ ".repeat(clean.length)}</div>
+        <div class="center letters" id="letters"></div>
+        <div class="center spelling-controls">
+          <button class="orange" onclick="undoSpellingLetter()">← 하나 지우기</button>
+          <button class="secondary" onclick="resetSpellingLetters()">처음부터</button>
+        </div>
+        <div class="result" id="result"></div>
+      `;
+
+      window.undoSpellingLetter = function() {
+        if (typed.length === 0) return;
+        typed = typed.slice(0, -1);
+        const lastButton = selectedButtons.pop();
+        if (lastButton) {
+          lastButton.disabled = false;
+          lastButton.classList.remove("used-letter");
+        }
+        renderSlots();
+        document.getElementById("result").textContent = "";
+      };
+
+      window.resetSpellingLetters = function() {
+        typed = "";
+        selectedButtons.forEach(btn => {
+          btn.disabled = false;
+          btn.classList.remove("used-letter");
+        });
+        selectedButtons = [];
+        renderSlots();
+        document.getElementById("result").textContent = "";
+      };
+
+      const letterArea = document.getElementById("letters");
+      letters.forEach(l => {
+        const btn = document.createElement("button");
+        btn.textContent = l;
+        btn.onclick = () => {
+          typed += l;
+          btn.disabled = true;
+          btn.classList.add("used-letter");
+          selectedButtons.push(btn);
+          renderSlots();
+
+          if (typed.length === clean.length) {
+            if (typed === clean) {
+              score += 10;
+              document.getElementById("result").textContent = "정답! 🐝";
+              updateStatus();
+              setTimeout(nextSpellingQuestion, 700);
+            } else {
+              document.getElementById("result").textContent = "틀렸어요. 지우기 버튼으로 고쳐 보세요!";
+            }
+          }
+        };
+        letterArea.appendChild(btn);
+      });
+      updateStatus();
+    }
+
+    // 4. 단어 비
+    function startWordRain(keepScore = false) {
+      if (!checkEnough()) return;
+      showGame("🌧️ 단어 비", keepScore);
+      current = randomWord();
+      count++;
+      updateStatus();
+      document.getElementById("gameContent").innerHTML = `
+        <div class="question">뜻: ${current.ko}</div>
+        <div class="play-area" id="rainArea"></div>
+        <div class="result" id="result"></div>
+      `;
+      const choices = shuffle([current, ...shuffle(words.filter(w => w.en !== current.en)).slice(0, 5)]);
+      const area = document.getElementById("rainArea");
+      choices.forEach((w, i) => {
+        const div = document.createElement("div");
+        div.className = "falling-word";
+        div.textContent = w.en;
+        div.style.left = (8 + i * 15) + "%";
+        div.style.top = "0px";
+        div.onclick = () => {
+          if (div.dataset.clicked === "yes") return;
+          div.dataset.clicked = "yes";
+
+          if (w.en === current.en) {
+            div.classList.add("clicked-correct");
+            score += 10;
+            document.getElementById("result").textContent = "정답! 🌧️";
+            updateStatus();
+            setTimeout(() => startWordRain(true), 800);
+          } else {
+            div.classList.add("clicked-wrong");
+            document.getElementById("result").textContent = "앗, 다른 단어예요!";
+            setTimeout(() => {
+              div.classList.remove("clicked-wrong");
+              div.dataset.clicked = "no";
+            }, 500);
+          }
+        };
+        area.appendChild(div);
+      });
+
+      let y = 0;
+      timer = setInterval(() => {
+        y += 2;
+        document.querySelectorAll(".falling-word").forEach((el, i) => {
+          el.style.top = (y + i * 8) + "px";
+        });
+        if (y > 330) y = 0;
+      }, 40);
+    }
+
+    // 5. 버블팝
+    function startBubblePop(keepScore = false) {
+      if (!checkEnough()) return;
+      clearInterval(timer);
+      showGame("🫧 버블팝", keepScore);
+      current = randomWord();
+      count++;
+      updateStatus();
+      document.getElementById("gameContent").innerHTML = `
+        <div class="question">뜻: ${current.ko}</div>
+        <div class="play-area" id="bubbleArea"></div>
+        <div class="result" id="result"></div>
+      `;
+
+      const choices = shuffle([current, ...shuffle(words.filter(w => w.en !== current.en)).slice(0, 5)]);
+      const area = document.getElementById("bubbleArea");
+
+      const positions = [
+        {left: 6, top: 8}, {left: 42, top: 6}, {left: 72, top: 12},
+        {left: 12, top: 55}, {left: 45, top: 50}, {left: 74, top: 58}
+      ];
+
+      choices.forEach((w, i) => {
+        const div = document.createElement("div");
+        div.className = "bubble";
+        div.textContent = w.en;
+        div.style.left = positions[i].left + "%";
+        div.style.top = positions[i].top + "%";
+        div.style.animationDelay = (i * 0.25) + "s";
+        div.onclick = () => {
+          if (w.en === current.en) {
+            score += 10;
+            updateStatus();
+            div.textContent = "POP!";
+            div.style.background = "#28a745";
+            document.getElementById("result").textContent = "정답! 🫧";
+            setTimeout(() => startBubblePop(true), 750);
+          } else {
+            div.style.background = "#ff5252";
+            document.getElementById("result").textContent = "다시 찾아봐요!";
+          }
+        };
+        area.appendChild(div);
+      });
+    }
+
+    // 6. 보물 철자 찾기
+    function startTreasure(keepScore = false) {
+      if (!checkEnough()) return;
+      showGame("💎 보물 철자 찾기", keepScore);
+      current = randomWord();
+      count++;
+      updateStatus();
+
+      const clean = current.en.toLowerCase().replace(/ /g, "");
+      const letterCount = clean.length;
+      const blankCount = Math.min(3, Math.max(1, Math.floor(letterCount / 3)));
+      let blankIndexes = [];
+
+      while (blankIndexes.length < blankCount) {
+        const idx = Math.floor(Math.random() * letterCount);
+        if (!blankIndexes.includes(idx)) blankIndexes.push(idx);
+      }
+      blankIndexes.sort((a, b) => a - b);
+
+      const answers = blankIndexes.map(i => clean[i]);
+      let answerPosition = 0;
+      let display = clean.split("");
+      blankIndexes.forEach(i => display[i] = "_");
+      let selectedTreasureButtons = [];
+
+      const wrongLetters = "abcdefghijklmnopqrstuvwxyz".split("")
+        .filter(l => !answers.includes(l));
+      const choices = shuffle([...answers, ...shuffle(wrongLetters).slice(0, Math.max(3, 6 - answers.length))]);
+
+      function renderTreasureWord() {
+        document.getElementById("blankWord").textContent = display.join("");
+      }
+
+      document.getElementById("gameContent").innerHTML = `
+        <div class="question">힌트: ${current.ko}</div>
+        <div class="blank-word" id="blankWord">${display.join("")}</div>
+        <p class="center">보물에 적힌 알파벳을 <b>순서대로</b> 눌러 빈칸을 채우세요.</p>
+        <div class="cards" id="treasureArea"></div>
+        <div class="center spelling-controls">
+          <button class="orange" onclick="undoTreasureLetter()">← 하나 지우기</button>
+          <button class="secondary" onclick="resetTreasureLetters()">처음부터</button>
+        </div>
+        <div class="result" id="result"></div>
+      `;
+
+      window.undoTreasureLetter = function() {
+        if (answerPosition === 0) return;
+        answerPosition--;
+        const idx = blankIndexes[answerPosition];
+        display[idx] = "_";
+        const lastButton = selectedTreasureButtons.pop();
+        if (lastButton) {
+          lastButton.classList.remove("used");
+        }
+        renderTreasureWord();
+        document.getElementById("result").textContent = "하나 지웠어요. 다시 골라 보세요.";
+      };
+
+      window.resetTreasureLetters = function() {
+        answerPosition = 0;
+        display = clean.split("");
+        blankIndexes.forEach(i => display[i] = "_");
+        selectedTreasureButtons.forEach(btn => btn.classList.remove("used"));
+        selectedTreasureButtons = [];
+        renderTreasureWord();
+        document.getElementById("result").textContent = "처음부터 다시 해요.";
+      };
+
+      const area = document.getElementById("treasureArea");
+
+      choices.forEach(letter => {
+        const div = document.createElement("div");
+        div.className = "box-card treasure-letter";
+        div.innerHTML = `<div>💎</div><div>${letter}</div>`;
+        div.onclick = () => {
+          if (div.classList.contains("used")) return;
+
+          if (letter === answers[answerPosition]) {
+            const idx = blankIndexes[answerPosition];
+            display[idx] = letter;
+            renderTreasureWord();
+            div.classList.add("used");
+            selectedTreasureButtons.push(div);
+            answerPosition++;
+
+            if (answerPosition === answers.length) {
+              score += 10;
+              updateStatus();
+              document.getElementById("result").textContent = "보물 철자를 모두 찾았어요! 💎";
+              setTimeout(() => startTreasure(true), 1000);
+            } else {
+              document.getElementById("result").textContent = "좋아요! 다음 보물을 찾아요.";
+            }
+          } else {
+            document.getElementById("result").textContent = "순서가 달라요. 다른 보물을 골라 보세요!";
+            div.style.background = "#ff5252";
+            setTimeout(() => {
+              if (!div.classList.contains("used")) div.style.background = "";
+            }, 500);
+          }
+        };
+        area.appendChild(div);
+      });
+    }
+
+  </script>
+</body>
+</html>
